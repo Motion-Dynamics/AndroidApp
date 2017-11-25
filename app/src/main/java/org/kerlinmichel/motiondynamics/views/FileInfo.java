@@ -36,7 +36,7 @@ public class FileInfo extends AppCompatActivity {
                 Intent sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
                 Uri fileURI = FileProvider.getUriForFile(FileInfo.this,
-                        "org.kerlinmichel.nthsense.MyFileProvider",
+                        "org.kerlinmichel.motiondynamics.MyFileProvider",
                         file);
                 sendIntent.putExtra(Intent.EXTRA_STREAM, fileURI);
                 sendIntent.setType("text/*");

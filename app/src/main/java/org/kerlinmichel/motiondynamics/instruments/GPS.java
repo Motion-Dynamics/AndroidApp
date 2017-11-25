@@ -32,7 +32,7 @@ public class GPS {
 
     private static boolean locationChange = false;
 
-    public static String data = "";
+    //public static String data = "";
 
     private GPS() {
     }
@@ -52,8 +52,6 @@ public class GPS {
                 acc = location.getAccuracy();
                 time = location.getTime();
                 locationChange = true;
-                data += time + "," + lat + "," + lon + "," + speed * 2.23694f + "," + alt * 3.28084
-                        + "," + acc + "\n";
             }
 
             public void onStatusChanged(String provider, int status, Bundle extras) {

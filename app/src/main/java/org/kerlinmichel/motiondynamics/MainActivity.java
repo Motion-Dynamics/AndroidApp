@@ -1,7 +1,9 @@
 package org.kerlinmichel.motiondynamics;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,36 +17,45 @@ import org.kerlinmichel.motiondynamics.instruments.DeviceInitException;
 import org.kerlinmichel.motiondynamics.instruments.GPS;
 import org.kerlinmichel.motiondynamics.instruments.InstrumentNetworkClient;
 import org.kerlinmichel.motiondynamics.views.DeviceSelection;
+import org.kerlinmichel.motiondynamics.views.FileView;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
     public static final int REQUEST_GPS = 0;
     private InstrumentNetworkClient client;
+    private String data;
+    private AlertDialog.Builder saveFileDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        try {
-            if(DeviceSelection.runGPS)
-                GPS.init(this);
-        } catch (DeviceInitException e) {
-            System.out.println("failed GPS start");
-        }
+        data = "";
         setContentView(R.layout.activity_main);
+        ((TextView)findViewById(R.id.toggleMeasuring)).setText("Start Measuring");
         findViewById(R.id.savefile).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 writeToFile();
             }
         });
-        findViewById(R.id.stop).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.toggleMeasuring).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(DeviceSelection.runGPS) {
-                    System.out.println("plz off");
+                if(GPS.isOn()) {
                     GPS.turnOff(MainActivity.this);
+                    ((TextView)findViewById(R.id.toggleMeasuring)).setText("Start Measuring");
+                    saveFileDialog.show();
+                } else {
+                    try {
+                        GPS.init(MainActivity.this);
+                        ((TextView)findViewById(R.id.toggleMeasuring)).setText("Stop Measuring");
+                    } catch (DeviceInitException e) {
+                        System.out.println(e);
+                    }
                 }
             }
         });
@@ -54,6 +65,50 @@ public class MainActivity extends AppCompatActivity {
                 connectToServer();
             }
         });
+        saveFileDialog = new AlertDialog.Builder(this);
+        saveFileDialog.setTitle("Save Data");
+        final EditText fileNameInput = new EditText(this);
+        saveFileDialog.setView(fileNameInput);
+        saveFileDialog.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                File file = new File(MainActivity.this.getApplicationContext().getFilesDir().getAbsolutePath(), fileNameInput.getText().toString());
+                try {
+                    if(file.exists())
+                        file.createNewFile();
+                    FileOutputStream outputStream = new FileOutputStream(file);
+                    outputStream.write("time,lat,lon,speed,alt,acc\n".getBytes());
+                    outputStream.write(data.getBytes());
+                    outputStream.flush();
+                    outputStream.close();
+                } catch (IOException e) {
+                    System.out.println(e);
+                }
+
+            }
+        });
+        findViewById(R.id.go_to_files).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, FileView.class);
+                startActivity(intent);
+            }
+        });
+        new AsyncTask<String, Void, Void>() {
+            long time = 0;
+
+            @Override
+            protected Void doInBackground(String... params) {
+                while(true) {
+                    if (time != GPS.getTime()) {
+                        data += GPS.getTime() + "," + GPS.getLat() + "," + GPS.getLon() + "," +
+                                GPS.getSpeed() * 2.23694f + "," + GPS.getAlt() * 3.28084 + "," +
+                                GPS.getAcc() + "\n";
+                    }
+                    time = GPS.getTime();
+                }
+            }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void connectToServer() {
@@ -77,6 +132,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startClient(String host, int port) {
+        if(client != null)
+            client.cancel(true);
         client = (InstrumentNetworkClient) new InstrumentNetworkClient(host, port) {
             long time;
             double lat = 0, lon;
@@ -100,13 +157,13 @@ public class MainActivity extends AppCompatActivity {
                 lat = GPS.getLat();
                 lon = GPS.getLon();
                 time = GPS.getTime();
-                if(Double.isInfinite(speed))
+                if(Double.isInfinite(speed) || Double.isNaN(speed))
                     speed = 0;
                 return "lat:" +GPS.getLat() + ",lon:" + GPS.getLon() + ",speed(calculated):" +
                         speed*2.23694f + ",speed(device):" + GPS.getSpeed() + ",alt:" +
                         GPS.getAlt()*3.28084 + ",acc:" + GPS.getAcc();
             };
-        }.execute("");
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void setData(double lat, double lon, float speed, double alt, float acc) {
@@ -125,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(f);
         FileOutputStream outputStream;
         String string = "time,lat,lon,speed,alt,acc\n";
-        string += GPS.data;
+        //string += GPS.data;
         try {
             /*File file = new File(getExternalFilesDir(null)+"/fight-data");
             if(!file.exists()){

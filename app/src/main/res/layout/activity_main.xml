@@ -38,7 +38,7 @@
             android:layout_height="wrap_content"
             android:text="accuracy" />
         <Button
-            android:id="@+id/stop"
+            android:id="@+id/toggleMeasuring"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Stop Measuring"/>
@@ -47,6 +47,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Save File"/>
+        <Button
+            android:id="@+id/go_to_files"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="View Files"/>
         <Button
             android:id="@+id/connect"
             android:layout_width="wrap_content"
