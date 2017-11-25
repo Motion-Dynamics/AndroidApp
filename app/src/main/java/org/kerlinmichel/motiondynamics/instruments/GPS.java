@@ -21,18 +21,11 @@ public class GPS {
     private static LocationManager locationManager;
     private static LocationListener locationListener;
 
-    private static Socket socket;
-    private static PrintWriter serverWriter;
-
     private static boolean isOn = false;
 
     private static double lat, lon, alt;
     private static float speed, acc;
     private static long time;
-
-    private static boolean locationChange = false;
-
-    //public static String data = "";
 
     private GPS() {
     }
@@ -41,17 +34,12 @@ public class GPS {
         locationManager = (LocationManager) activity.getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
             public void onLocationChanged(Location location) {
-                // Called when a new location is found by the network location provider.
-                ((MainActivity) activity).setData(location.getLatitude(), location.getLongitude(),
-                        location.getSpeed() * 2.23694f, location.getAltitude() * 3.28084,
-                        location.getAccuracy());
                 lat = location.getLatitude();
                 lon = location.getLongitude();
                 speed = location.getSpeed();
                 alt = location.getAltitude();
                 acc = location.getAccuracy();
                 time = location.getTime();
-                locationChange = true;
             }
 
             public void onStatusChanged(String provider, int status, Bundle extras) {

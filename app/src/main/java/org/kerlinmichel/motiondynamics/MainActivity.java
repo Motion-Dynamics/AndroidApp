@@ -36,19 +36,15 @@ public class MainActivity extends AppCompatActivity {
         data = "";
         setContentView(R.layout.activity_main);
         ((TextView)findViewById(R.id.toggleMeasuring)).setText("Start Measuring");
-        findViewById(R.id.savefile).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                writeToFile();
-            }
-        });
         findViewById(R.id.toggleMeasuring).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(GPS.isOn()) {
                     GPS.turnOff(MainActivity.this);
                     ((TextView)findViewById(R.id.toggleMeasuring)).setText("Start Measuring");
-                    saveFileDialog.show();
+                    //saveFileDialog.show();
+                    createDataFile();
+                    data = "";
                 } else {
                     try {
                         GPS.init(MainActivity.this);
@@ -104,11 +100,31 @@ public class MainActivity extends AppCompatActivity {
                         data += GPS.getTime() + "," + GPS.getLat() + "," + GPS.getLon() + "," +
                                 GPS.getSpeed() * 2.23694f + "," + GPS.getAlt() * 3.28084 + "," +
                                 GPS.getAcc() + "\n";
+                        setData(GPS.getLat(), GPS.getLon(), GPS.getSpeed() * 2.23694f,
+                                GPS.getAlt() * 3.28084, GPS.getAcc());
+                        System.out.println("time: " + time);
                     }
                     time = GPS.getTime();
                 }
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    public void createDataFile() {
+        File dir = new File(getApplicationContext().getFilesDir().getAbsolutePath());
+        int numFiles = dir.listFiles().length;
+        File file = new File(dir, (numFiles+1) + ".csv");
+        try {
+            if(file.exists())
+                file.createNewFile();
+            FileOutputStream outputStream = new FileOutputStream(file);
+            outputStream.write("time,lat,lon,speed,alt,acc\n".getBytes());
+            outputStream.write(data.getBytes());
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException e) {
+            System.out.println(e);
+        }
     }
 
     public void connectToServer() {
@@ -174,31 +190,6 @@ public class MainActivity extends AppCompatActivity {
         ((TextView)findViewById(R.id.accuracy)).setText("Accuracy: " + acc + "%");
     }
 
-    public void writeToFile() {
-        File dir = getExternalFilesDir(null);
-        File[] files = dir.listFiles();
-        System.out.println(dir.getAbsoluteFile());
-        for(File f: files)
-            System.out.println(f);
-        FileOutputStream outputStream;
-        String string = "time,lat,lon,speed,alt,acc\n";
-        //string += GPS.data;
-        try {
-            /*File file = new File(getExternalFilesDir(null)+"/fight-data");
-            if(!file.exists()){
-                file.mkdirs();
-            }*/
-            System.out.println(getExternalFilesDir(null));
-            File dataFile = new File(getExternalFilesDir(null), files.length + ".csv");
-            outputStream = new FileOutputStream(dataFile);
-            outputStream.write(string.getBytes());
-            outputStream.flush();
-            outputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -209,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
 
                 } else {
                     // permission denied
+                    System.out.println("GPS Permission denied");
                 }
                 return;
             }
