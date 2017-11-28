@@ -16,7 +16,6 @@ import android.widget.TextView;
 import org.kerlinmichel.motiondynamics.instruments.DeviceInitException;
 import org.kerlinmichel.motiondynamics.instruments.GPS;
 import org.kerlinmichel.motiondynamics.instruments.InstrumentNetworkClient;
-import org.kerlinmichel.motiondynamics.views.DeviceSelection;
 import org.kerlinmichel.motiondynamics.views.FileView;
 
 import java.io.File;
@@ -29,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private InstrumentNetworkClient client;
     private String data;
     private AlertDialog.Builder saveFileDialog;
+    private Thread updateText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,14 +100,34 @@ public class MainActivity extends AppCompatActivity {
                         data += GPS.getTime() + "," + GPS.getLat() + "," + GPS.getLon() + "," +
                                 GPS.getSpeed() * 2.23694f + "," + GPS.getAlt() * 3.28084 + "," +
                                 GPS.getAcc() + "\n";
-                        setData(GPS.getLat(), GPS.getLon(), GPS.getSpeed() * 2.23694f,
-                                GPS.getAlt() * 3.28084, GPS.getAcc());
-                        System.out.println("time: " + time);
                     }
                     time = GPS.getTime();
                 }
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        updateText = new Thread() {
+            long time = 0;
+            @Override
+            public void run() {
+                try {
+                    while(!isInterrupted()) {
+                        Thread.sleep(500);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(time != GPS.getTime())
+                                    setData(GPS.getLat(), GPS.getLon(), GPS.getSpeed() * 2.23694f,
+                                            GPS.getAlt() * 3.28084, GPS.getAcc());
+                                time = GPS.getTime();
+                            }
+                        });
+                    }
+                } catch(InterruptedException e) {
+                    System.out.println(e);
+                }
+            }
+        };
+        updateText.start();
     }
 
     public void createDataFile() {
