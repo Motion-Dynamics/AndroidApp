@@ -178,7 +178,8 @@ public class MainActivity extends AppCompatActivity {
     public void startClient(String host, int port) {
         if(client != null)
             client.cancel(true);
-        client = (InstrumentNetworkClient) new InstrumentNetworkClient(host, port) {
+        String headers =  "lat,lon,speed(calculated),speed(device),alt,acc";
+        client = (InstrumentNetworkClient) new InstrumentNetworkClient(host, port, headers) {
             long time;
             double lat = 0, lon;
 
@@ -194,18 +195,14 @@ public class MainActivity extends AppCompatActivity {
                 double speed = 0;
                 double distance = GPS.distance_on_geoid(lat, lon, GPS.getLat(), GPS.getLon());
                 double dtime_s = (GPS.getTime() - time) / 1000.0;
-                System.out.println("dist: " + distance);
-                System.out.println("time: " + dtime_s);
-                System.out.println("mps: " + (distance / dtime_s));
                 speed = distance / dtime_s;
                 lat = GPS.getLat();
                 lon = GPS.getLon();
                 time = GPS.getTime();
                 if(Double.isInfinite(speed) || Double.isNaN(speed))
                     speed = 0;
-                return "lat:" +GPS.getLat() + ",lon:" + GPS.getLon() + ",speed(calculated):" +
-                        speed*2.23694f + ",speed(device):" + GPS.getSpeed() + ",alt:" +
-                        GPS.getAlt()*3.28084 + ",acc:" + GPS.getAcc();
+                return GPS.getLat() + "," + GPS.getLon() + "," + speed*2.23694f + "," + GPS.getSpeed()
+                        + "," + GPS.getAlt()*3.28084 + "," + GPS.getAcc();
             };
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
