@@ -33,10 +33,35 @@
             android:layout_height="wrap_content"
             android:text="longitude" />
         <TextView
-            android:id="@+id/accuracy"
+            android:id="@+id/gyroX"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="accuracy" />
+            android:text="Gyroscope X" />
+        <TextView
+            android:id="@+id/gyroY"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gyroscope Y" />
+        <TextView
+            android:id="@+id/gyroZ"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gyroscope Z" />
+        <TextView
+            android:id="@+id/acclX"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accelerometer X" />
+        <TextView
+            android:id="@+id/acclY"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accelerometer Y" />
+        <TextView
+            android:id="@+id/acclZ"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accelerometer Z" />
         <Button
             android:id="@+id/toggleMeasuring"
             android:layout_width="wrap_content"

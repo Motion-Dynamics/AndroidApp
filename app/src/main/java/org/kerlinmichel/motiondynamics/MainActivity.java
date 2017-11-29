@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import org.kerlinmichel.motiondynamics.instruments.DeviceInitException;
 import org.kerlinmichel.motiondynamics.instruments.GPS;
+import org.kerlinmichel.motiondynamics.instruments.GyroscopeAndAccelerometer;
 import org.kerlinmichel.motiondynamics.instruments.InstrumentNetworkClient;
 import org.kerlinmichel.motiondynamics.views.FileView;
 
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(GPS.isOn()) {
                     GPS.turnOff(MainActivity.this);
+                    GyroscopeAndAccelerometer.turnOff();
                     ((TextView)findViewById(R.id.toggleMeasuring)).setText("Start Measuring");
                     //saveFileDialog.show();
                     createDataFile();
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     try {
                         GPS.init(MainActivity.this);
+                        GyroscopeAndAccelerometer.init(MainActivity.this);
                         ((TextView)findViewById(R.id.toggleMeasuring)).setText("Stop Measuring");
                     } catch (DeviceInitException e) {
                         System.out.println(e);
@@ -115,9 +118,14 @@ public class MainActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                if(time != GPS.getTime())
-                                    setData(GPS.getLat(), GPS.getLon(), GPS.getSpeed() * 2.23694f,
+                                if(time != GPS.getTime()) {
+                                    setGPSData(GPS.getLat(), GPS.getLon(), GPS.getSpeed() * 2.23694f,
                                             GPS.getAlt() * 3.28084, GPS.getAcc());
+                                    setAccelerometerData(GyroscopeAndAccelerometer.getAcclX(),
+                                            GyroscopeAndAccelerometer.getAcclY(), GyroscopeAndAccelerometer.getAcclZ());
+                                    setGyroscopeData(GyroscopeAndAccelerometer.getGyroX(), GyroscopeAndAccelerometer.getGyroY(),
+                                            GyroscopeAndAccelerometer.getGyroZ());
+                                }
                                 time = GPS.getTime();
                             }
                         });
@@ -202,12 +210,23 @@ public class MainActivity extends AppCompatActivity {
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
-    public void setData(double lat, double lon, float speed, double alt, float acc) {
+    public void setGPSData(double lat, double lon, float speed, double alt, float acc) {
         ((TextView)findViewById(R.id.latitude)).setText("Lat: " + lat);
         ((TextView)findViewById(R.id.longitude)).setText("Lon: " + lon);
         ((TextView)findViewById(R.id.speed)).setText("Speed: " + speed + " mph");
         ((TextView)findViewById(R.id.altitude)).setText("Alt: " + alt);
-        ((TextView)findViewById(R.id.accuracy)).setText("Accuracy: " + acc + "%");
+    }
+
+    public void setGyroscopeData(float x, float y, float z) {
+        ((TextView)findViewById(R.id.gyroX)).setText("Gyroscope X: " + x);
+        ((TextView)findViewById(R.id.gyroY)).setText("Gyroscope Y: " + y);
+        ((TextView)findViewById(R.id.gyroZ)).setText("Gyroscope Z: " + z);
+    }
+
+    public void setAccelerometerData(float x, float y, float z) {
+        ((TextView)findViewById(R.id.acclX)).setText("Accelerometer X: " + x);
+        ((TextView)findViewById(R.id.acclY)).setText("Accelerometer Y: " + y);
+        ((TextView)findViewById(R.id.acclZ)).setText("Accelerometer Z: " + z);
     }
 
     @Override
